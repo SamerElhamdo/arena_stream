@@ -485,21 +485,22 @@ volumes:
 - [x] إنشاء docker-compose.yml
 - [x] إعداد Django Admin
 - [x] إنشاء migrations
+- [x] إنشاء Admin endpoints إضافية
+- [x] كتابة Unit Tests
+- [x] إعداد Admin Analytics
+- [x] إعداد Live Viewers Management
 
 ### ⏳ قيد الإنجاز (In Progress)
 
-- [ ] اختبار API endpoints
 - [ ] تشغيل السيرفر واختبار الوظائف
 
 ### 📋 لم يُنجز بعد (Todo)
 
-- [ ] كتابة Unit Tests
 - [ ] إعداد Celery (للمهام الخلفية)
 - [ ] إعداد Logging
 - [ ] إعداد CI/CD
 - [ ] إعداد Monitoring (Sentry/NewRelic)
 - [ ] تحسين الأداء
-- [ ] إضافة Admin endpoints إضافية
 - [ ] إعداد Email Notifications
 - [ ] إضافة Advanced Analytics
 - [ ] إعداد Backup Strategy
