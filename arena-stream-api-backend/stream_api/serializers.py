@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import CustomUser, Subscription, Channel, Event, Category, DeviceLimit
+from .models import CustomUser, Subscription, Channel, Event, Category, DeviceLimit, ReStreamTarget, ReStreamSession
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -181,3 +181,60 @@ class StreamResponseSerializer(serializers.Serializer):
     hls_url = serializers.URLField()
     expires_in = serializers.IntegerField()
     session_id = serializers.UUIDField()
+
+
+class ReStreamTargetSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Re-Stream Targets
+    """
+    platform_display = serializers.CharField(source='get_platform_display', read_only=True)
+    
+    class Meta:
+        model = ReStreamTarget
+        fields = ['id', 'name', 'platform', 'platform_display', 'rtmp_url', 'stream_key', 'is_active', 
+                  'full_rtmp_url', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+
+class ReStreamSessionSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Re-Stream Sessions
+    """
+    channel_name = serializers.CharField(source='channel.name', read_only=True)
+    target_name = serializers.CharField(source='target.name', read_only=True)
+    duration = serializers.CharField(read_only=True)
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = ReStreamSession
+        fields = ['id', 'channel', 'channel_name', 'target', 'target_name', 'source_url', 
+                  'rtmp_url', 'status', 'status_display', 'process_id', 'error_message', 
+                  'started_at', 'stopped_at', 'last_update', 'duration']
+        read_only_fields = ['started_at', 'last_update']
+
+
+class ReStreamStartSerializer(serializers.Serializer):
+    """
+    Serializer for starting a re-stream
+    """
+    channel_id = serializers.IntegerField()
+    source_url = serializers.URLField(help_text="M3U or HLS source URL")
+    target_id = serializers.IntegerField()
+    
+    def validate_channel_id(self, value):
+        """Validate channel exists"""
+        try:
+            channel = Channel.objects.get(id=value)
+        except Channel.DoesNotExist:
+            raise serializers.ValidationError('Channel not found')
+        return value
+    
+    def validate_target_id(self, value):
+        """Validate target exists"""
+        try:
+            target = ReStreamTarget.objects.get(id=value)
+            if not target.is_active:
+                raise serializers.ValidationError('Target is not active')
+        except ReStreamTarget.DoesNotExist:
+            raise serializers.ValidationError('Target not found')
+        return value

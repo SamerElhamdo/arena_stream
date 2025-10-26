@@ -5,6 +5,7 @@ from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, Sp
 
 from . import views
 from . import admin_views
+from . import restream_views
 
 # Create router for ViewSets (if any)
 router = DefaultRouter()
@@ -67,6 +68,16 @@ urlpatterns = [
     path('admin/analytics/', admin_views.admin_analytics, name='admin-analytics'),
     path('admin/live-viewers/', admin_views.live_viewers, name='admin-live-viewers'),
     path('admin/disconnect-session/<int:user_id>/<str:session_id>/', admin_views.disconnect_user_session, name='admin-disconnect-session'),
+    
+    # Re-Streaming Endpoints
+    path('admin/restream/targets/', restream_views.ReStreamTargetListView.as_view(), name='restream-target-list'),
+    path('admin/restream/targets/<int:pk>/', restream_views.ReStreamTargetDetailView.as_view(), name='restream-target-detail'),
+    path('admin/restream/sessions/', restream_views.ReStreamSessionListView.as_view(), name='restream-session-list'),
+    path('admin/restream/sessions/<int:pk>/', restream_views.ReStreamSessionDetailView.as_view(), name='restream-session-detail'),
+    path('admin/restream/start/', restream_views.start_restream_session, name='restream-start'),
+    path('admin/restream/stop/<int:session_id>/', restream_views.stop_restream_session, name='restream-stop'),
+    path('admin/restream/status/<int:session_id>/', restream_views.get_restream_status, name='restream-status'),
+    path('admin/restream/active/', restream_views.list_active_restreams, name='restream-active'),
     
     # Router URLs (for ViewSets)
     path('', include(router.urls)),

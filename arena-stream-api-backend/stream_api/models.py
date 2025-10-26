@@ -168,3 +168,71 @@ class DeviceLimit(models.Model):
     
     def __str__(self):
         return f"{self.user.email} - {self.device_name}"
+
+
+class ReStreamTarget(models.Model):
+    """
+    Re-streaming targets (Telegram, Twitter, Facebook, etc.)
+    """
+    name = models.CharField(max_length=100)
+    platform = models.CharField(max_length=50, help_text="Platform name (telegram, twitter, facebook, youtube)")
+    rtmp_url = models.URLField(help_text="RTMP URL for streaming")
+    stream_key = models.CharField(max_length=500, blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 're_stream_target'
+        verbose_name = 'Re-Stream Target'
+        verbose_name_plural = 'Re-Stream Targets'
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+    
+    @property
+    def full_rtmp_url(self):
+        """Return complete RTMP URL with stream key"""
+        if self.stream_key:
+            return f"{self.rtmp_url}/{self.stream_key}"
+        return self.rtmp_url
+
+
+class ReStreamSession(models.Model):
+    """
+    Active re-streaming sessions
+    """
+    STATUS_CHOICES = [
+        ('Starting', 'Starting'),
+        ('Running', 'Running'),
+        ('Stopped', 'Stopped'),
+        ('Error', 'Error'),
+    ]
+    
+    channel = models.ForeignKey(Channel, on_delete=models.CASCADE, related_name='restream_sessions')
+    target = models.ForeignKey(ReStreamTarget, on_delete=models.CASCADE, related_name='sessions')
+    source_url = models.URLField(help_text="Source M3U/HLS URL")
+    rtmp_url = models.URLField(help_text="RTMP destination URL")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Starting')
+    process_id = models.CharField(max_length=100, blank=True, null=True, help_text="FFmpeg process ID")
+    error_message = models.TextField(blank=True, null=True)
+    started_at = models.DateTimeField(auto_now_add=True)
+    stopped_at = models.DateTimeField(null=True, blank=True)
+    last_update = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 're_stream_session'
+        verbose_name = 'Re-Stream Session'
+        verbose_name_plural = 'Re-Stream Sessions'
+        ordering = ['-started_at']
+    
+    def __str__(self):
+        return f"{self.channel.name} -> {self.target.name}"
+    
+    @property
+    def duration(self):
+        """Calculate streaming duration"""
+        if self.stopped_at:
+            return self.stopped_at - self.started_at
+        return timezone.now() - self.started_at
